@@ -12,14 +12,15 @@ app.use(bodyParser.json());
 
 const uri = process.env.DB_PATH
 // const uri = "mongodb+srv://dbUser:bSgtVXvRU7BL1f1U@cluster0-r2lzi.mongodb.net/test?retryWrites=true&w=majority";
-// const client = new MongoClient(uri, { useNewUrlParser: true });
+//  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.get('/products', (req,res) => {
-    
+  let client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
     MongoClient.connect(uri, function(err, client) {
         const collection = client.db("store").collection("product");
         // perform actions on the collection object
-        collection.find({name:'Mobile'}).toArray((error,documents)=>{
+        
+        collection.find().toArray((error,documents)=>{
           if(error){
               console.log(error);
               res.status(500).send({message:error})
@@ -29,7 +30,7 @@ app.get('/products', (req,res) => {
           }
            
             })
-        client.close();
+      // client.close();
       });
       
 })
@@ -44,26 +45,59 @@ app.get ('/nizam/data',(req,res)=>{
     })
 })
  
-const users=["Nizam Uddin","Babu","kamal","Jamal","amal","Maik","Armal Malik"]
 //datbase
 
 
+// app.get('/users:id'
 
-
-
-
-
-
-
-
-
-
-app.get('/users/:id',(req,res)=>{
-  const id= req.params.id;
-  const name=users[id]  
- res.send({id,name})
+app.get('/product/:key',(req,res)=>{
+  const key= req.params.key;
+  MongoClient.connect(uri, function(err, client) {
+    const collection = client.db("store").collection("product");
+    // perform actions on the collection object
+    collection.find({key}).toArray((error,documents)=>{
+      if(error){
+          console.log(error);
+          res.status(500).send({message:error})
+      }
+      else{
+        res.send(documents[0]);
+      }
+       
+        })
+    client.close();
+  });
   
 })
+
+
+
+//cpy
+app.post('/getProductByKey',(req,res)=>{
+  const key= req.params.key;
+  const productKeys=req.body;
+  MongoClient.connect(uri, function(err, client) {
+    const collection = client.db("store").collection("product");
+    // perform actions on the collection object
+    collection.find({key:{$in:productKeys}}).toArray((error,documents)=>{
+      if(error){
+          console.log(error);
+          res.status(500).send({message:error})
+      }
+      else{
+        res.send(documents);
+      }
+       
+        })
+        
+  client.close();
+  });
+  
+})
+
+
+
+
 
 app.post('/addProduct',(req,res) =>{
     //save to datbase
@@ -73,7 +107,7 @@ app.post('/addProduct',(req,res) =>{
     MongoClient.connect(uri, function(err, client) {
         const collection = client.db("store").collection("product");
         // perform actions on the collection object
-        collection.insertOne(product, (error,result)=>{
+        collection.insert(product, (error,result)=>{
             console.log("sucessfully Insert",result);
           if(error){
               console.log(err);
@@ -85,10 +119,39 @@ app.post('/addProduct',(req,res) =>{
            
             })
         client.close();
-      });
-      
-      
-    
+      });   
 })
-const port = process.env.PORT || 7200
+
+
+
+
+
+
+
+app.post('/placeOrder',(req,res) =>{
+  //save to datbase
+  const orderDetails=req.body;
+  orderDetails.orderTime=new Date();
+ console.log(orderDetails);
+ 
+  MongoClient.connect(uri, function(err, client) {
+      const collection = client.db("store").collection("orders");
+      // perform actions on the collection object
+      collection.insertOne(orderDetails, (error,result)=>{
+          console.log("sucessfully Insert",result);
+        if(error){
+            console.log(err);
+            res.status(500).send({message:error})
+        }
+        else{
+          res.send(result.ops[0]);
+        }
+         
+          })
+      client.close();
+    });   
+})
+
+
+const port = process.env.PORT || 4200
 app.listen(port ,() => console.log("listing port 4200"));
