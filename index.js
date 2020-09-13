@@ -132,13 +132,12 @@ app.post('/placeOrder',(req,res) =>{
   //save to datbase
   const orderDetails=req.body;
   orderDetails.orderTime=new Date();
- console.log(orderDetails);
- 
+  console.log(orderDetails);
+  client = new MongoClient(uri, { useNewUrlParser: true});
   MongoClient.connect(uri, function(err, client) {
       const collection = client.db("store").collection("orders");
       // perform actions on the collection object
       collection.insertOne(orderDetails, (error,result)=>{
-          console.log("sucessfully Insert",result);
         if(error){
             console.log(err);
             res.status(500).send({message:error})
